@@ -24,16 +24,20 @@ window.addEventListener('scroll', scheduleScrollSync, { passive: true });
 window.addEventListener('resize', scheduleScrollSync);
 
 function navigateTo(target) {
-  const distance = Math.abs(target.getBoundingClientRect().top);
-  target.scrollIntoView({ behavior: !reducedMotion.matches && distance < window.innerHeight * 1.3 ? 'smooth' : 'instant' });
+  const top = target.id === 'top' ? 0 : target.getBoundingClientRect().top + window.scrollY;
+  const behavior = !reducedMotion.matches && Math.abs(top - window.scrollY) < window.innerHeight * 1.3 ? 'smooth' : 'instant';
+  if (target.id === 'top') window.scrollTo({ top: 0, behavior });
+  else target.scrollIntoView({ behavior });
 }
 
 document.querySelectorAll('a[href^="#"]').forEach((link) => {
   link.addEventListener('click', (event) => {
-    const target = document.querySelector(link.getAttribute('href'));
+    const hash = link.getAttribute('href');
+    if (hash === '#') return;
+    const target = document.querySelector(hash);
     if (!target) return;
     event.preventDefault();
-    history.pushState(null, '', link.getAttribute('href'));
+    history.pushState(null, '', hash);
     navigateTo(target);
   });
 });
