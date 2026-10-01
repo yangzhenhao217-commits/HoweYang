@@ -6,10 +6,37 @@ const viewerTitle = document.querySelector('#viewer-title');
 const viewerContent = document.querySelector('#viewer-content');
 const viewerOpen = document.querySelector('#viewer-open');
 const viewerClose = document.querySelector('#viewer-close');
+const readingProgress = document.querySelector('.reading-progress');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-const setHeaderState = () => header.classList.toggle('scrolled', window.scrollY > 12);
-setHeaderState();
-window.addEventListener('scroll', setHeaderState, { passive: true });
+let scrollFrame = 0;
+function syncScrollState() {
+  scrollFrame = 0;
+  header?.classList.toggle('scrolled', window.scrollY > 12);
+  const distance = document.documentElement.scrollHeight - window.innerHeight;
+  if (readingProgress) readingProgress.style.transform = `scaleX(${distance > 0 ? Math.min(window.scrollY / distance, 1) : 0})`;
+}
+function scheduleScrollSync() {
+  if (!scrollFrame) scrollFrame = requestAnimationFrame(syncScrollState);
+}
+syncScrollState();
+window.addEventListener('scroll', scheduleScrollSync, { passive: true });
+window.addEventListener('resize', scheduleScrollSync);
+
+function navigateTo(target) {
+  const distance = Math.abs(target.getBoundingClientRect().top);
+  target.scrollIntoView({ behavior: !reducedMotion.matches && distance < window.innerHeight * 1.3 ? 'smooth' : 'instant' });
+}
+
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target) return;
+    event.preventDefault();
+    history.pushState(null, '', link.getAttribute('href'));
+    navigateTo(target);
+  });
+});
 
 menuButton?.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') === 'true';
@@ -25,7 +52,10 @@ mobileMenu?.querySelectorAll('a').forEach((link) => {
 });
 
 document.querySelectorAll('[data-scroll-target]').forEach((button) => {
-  button.addEventListener('click', () => document.querySelector(button.dataset.scrollTarget)?.scrollIntoView({ behavior: 'smooth' }));
+  button.addEventListener('click', () => {
+    const target = document.querySelector(button.dataset.scrollTarget);
+    if (target) navigateTo(target);
+  });
 });
 
 const revealObserver = new IntersectionObserver((entries) => {
@@ -72,9 +102,9 @@ const countObserver = new IntersectionObserver((entries) => {
     const end = Number(entry.target.dataset.count || 0);
     const suffix = entry.target.dataset.suffix || '';
     const startedAt = performance.now();
-    const duration = 900;
+    const duration = reducedMotion.matches ? 0 : 650;
     const tick = (now) => {
-      const progress = Math.min((now - startedAt) / duration, 1);
+      const progress = duration ? Math.min((now - startedAt) / duration, 1) : 1;
       const eased = 1 - Math.pow(1 - progress, 3);
       entry.target.textContent = `${Math.round(end * eased)}${suffix}`;
       if (progress < 1) requestAnimationFrame(tick);
@@ -100,15 +130,21 @@ chartButtons.forEach((button) => {
     button.classList.add('active');
     button.setAttribute('aria-selected', 'true');
     if (!chartImage || !chartImageButton) return;
-    chartImage.style.opacity = '0';
-    window.setTimeout(() => {
-      chartImage.src = button.dataset.chart;
-      chartImage.alt = button.dataset.caption;
-      chartImageButton.dataset.view = button.dataset.chart;
-      chartImageButton.dataset.title = button.dataset.caption;
-      chartCaption.textContent = button.dataset.caption;
-      chartImage.style.opacity = '1';
-    }, 160);
+    chartImage.src = button.dataset.chart;
+    chartImage.alt = button.dataset.caption;
+    chartImageButton.dataset.view = button.dataset.chart;
+    chartImageButton.dataset.title = button.dataset.caption;
+    chartCaption.textContent = button.dataset.caption;
+  });
+  button.addEventListener('keydown', (event) => {
+    const current = [...chartButtons].indexOf(button);
+    const next = event.key === 'ArrowRight' ? (current + 1) % chartButtons.length
+      : event.key === 'ArrowLeft' ? (current - 1 + chartButtons.length) % chartButtons.length
+      : event.key === 'Home' ? 0 : event.key === 'End' ? chartButtons.length - 1 : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    chartButtons[next].focus();
+    chartButtons[next].click();
   });
 });
 
@@ -169,13 +205,14 @@ const portfolioObserver = new IntersectionObserver((entries) => {
     .filter((entry) => entry.isIntersecting)
     .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
   if (!visible) return;
+  const previous = portfolioLinks.find((link) => link.classList.contains('active'));
   portfolioLinks.forEach((link) => {
     const active = link.getAttribute('href') === `#${visible.target.id}`;
     link.classList.toggle('active', active);
-    if (active && portfolioLinks[0]?.parentElement) {
+    if (active && previous !== link && portfolioLinks[0]?.parentElement) {
       const nav = portfolioLinks[0].parentElement;
       const left = link.offsetLeft - nav.offsetLeft - (nav.clientWidth - link.clientWidth) / 2;
-      nav.scrollTo({ left, behavior: 'smooth' });
+      nav.scrollTo({ left, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
     }
   });
 }, { rootMargin: '-27% 0px -56% 0px', threshold: [0, .1, .3] });
