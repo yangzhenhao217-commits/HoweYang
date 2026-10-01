@@ -114,29 +114,50 @@ chartButtons.forEach((button) => {
 
 const rscLiveStage = document.querySelector('#rsc-live-stage');
 const rscLiveCanvas = rscLiveStage?.querySelector('.rsc-live-canvas');
+const rscLiveFrame = rscLiveCanvas?.querySelector('iframe');
+const rscInteractToggle = rscLiveStage?.querySelector('.rsc-interact-toggle');
+const rscInteractExit = rscLiveStage?.querySelector('.rsc-interact-exit');
 let rscLiveWidth = 0;
 let rscLiveCompact = null;
+
+function setRscInteraction(active) {
+  if (!rscLiveStage) return;
+  rscLiveStage.classList.toggle('is-interacting', active);
+  rscInteractToggle?.setAttribute('aria-pressed', String(active));
+  if (rscInteractExit) rscInteractExit.hidden = !active;
+  if (rscLiveFrame) rscLiveFrame.tabIndex = active ? 0 : -1;
+}
 
 function fitRscLiveSite() {
   if (!rscLiveStage || !rscLiveCanvas) return;
   const width = rscLiveStage.clientWidth;
   const compact = window.matchMedia('(max-width: 760px)').matches;
   if (width === rscLiveWidth && compact === rscLiveCompact) return;
+  const modeChanged = compact !== rscLiveCompact;
   rscLiveWidth = width;
   rscLiveCompact = compact;
   if (compact) {
-    rscLiveStage.style.height = '620px';
+    rscLiveStage.style.height = '560px';
     rscLiveCanvas.style.transform = 'none';
+    if (modeChanged) setRscInteraction(false);
   } else {
     const scale = width / 1280;
     rscLiveStage.style.height = `${Math.round(1020 * scale)}px`;
     rscLiveCanvas.style.transform = `scale(${scale})`;
+    rscLiveStage.classList.remove('is-interacting');
+    if (rscInteractExit) rscInteractExit.hidden = true;
+    rscLiveFrame?.removeAttribute('tabindex');
   }
 }
 
 fitRscLiveSite();
 if (rscLiveStage) new ResizeObserver(fitRscLiveSite).observe(rscLiveStage);
 window.addEventListener('resize', fitRscLiveSite);
+rscInteractToggle?.addEventListener('click', () => setRscInteraction(true));
+rscInteractExit?.addEventListener('click', () => setRscInteraction(false));
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && rscLiveStage?.classList.contains('is-interacting')) setRscInteraction(false);
+});
 
 const portfolioLinks = [...document.querySelectorAll('.portfolio-nav a')];
 const portfolioChapters = portfolioLinks

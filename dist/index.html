@@ -8,8 +8,8 @@
   <meta name="author" content="杨振豪 · Howe Yang">
   <title>杨振豪 Howe Yang · 业务运营与数据作品集</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231d1d1f'/%3E%3Cpath d='M16 18h12l4 9 4-9h12L37 39v9H27v-9z' fill='%23fff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20260930-5">
-  <script src="script.js?v=20260930-5" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261001-1">
+  <script src="script.js?v=20261001-1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
@@ -268,10 +268,15 @@
             </div>
             <div class="rsc-live-stage" id="rsc-live-stage">
               <div class="rsc-live-canvas">
-                <iframe src="https://huazhongrsc.bbroot.com" title="RSC 服务费用快速测算器，可在窗口内输入和滚动" loading="lazy" allow="clipboard-write"></iframe>
+                <iframe src="https://huazhongrsc.bbroot.com" title="RSC 服务费用快速测算器，可在窗口内输入和滚动" loading="lazy" allow="clipboard-write" tabindex="-1"></iframe>
               </div>
+              <div class="rsc-mobile-gate">
+                <span>实时预览 · 页面可继续向下滑动</span>
+                <button type="button" class="rsc-interact-toggle" aria-pressed="false">点击体验工具 ↗</button>
+              </div>
+              <button type="button" class="rsc-interact-exit" hidden>完成体验 · 继续浏览 ↓</button>
             </div>
-            <div class="rsc-live-foot"><span>在窗口内滚动，填写里程、优惠券并查看两种方案。</span><span>真实网站 · 实时结果</span></div>
+            <div class="rsc-live-foot"><span>桌面端可直接操作；手机端点击“体验工具”后交互，退出即可继续浏览。</span><span>真实网站 · 实时结果</span></div>
           </div>
         </div>
         <div class="process wrap" id="rsc-process">
@@ -327,15 +332,19 @@
 
     <section class="archive" id="archive">
       <section class="archive-group wrap portfolio-chapter" id="work-research">
-        <header class="archive-group-head reveal"><span>03 / Industry Research</span><div><h3>从产业趋势，走向公司战略。</h3><p>聚焦新能源、AI 算力及电力行业，结合行业趋势、竞争格局、商业模式与代表性企业战略形成研究框架。国家社科基金重大项目中的研究成果也作为 MBA 教学参考与案例来源。</p></div></header>
+        <header class="archive-group-head reveal"><span>03 / Industry Research</span><div><h3>从产业趋势，走向公司战略。</h3><p>聚焦新能源、AI 算力、智能机器人及电力行业，结合产业链、竞争格局、商业模式与代表性企业战略形成研究框架。国家社科基金重大项目中的研究成果也作为 MBA 教学参考与案例来源。</p></div></header>
         <div class="archive-grid research-grid">
           <article class="work-card compact-card reveal" data-view="assets/docs/industry-strategy.pdf" data-kind="pdf" data-title="《产业分析与公司战略》专著" tabindex="0" role="button">
-            <div class="compact-art"><span>322</span><small>PAGES</small></div>
+            <div class="strategy-cover" aria-hidden="true">
+              <div class="strategy-cover-top"><span>INDUSTRY / STRATEGY</span><span>研究专著 · 322 页</span></div>
+              <div class="strategy-cover-core"><span class="strategy-cover-orbit orbit-one"></span><span class="strategy-cover-orbit orbit-two"></span><span class="strategy-cover-center">产业洞察<br><b>→</b> 公司战略</span></div>
+              <div class="strategy-cover-bottom"><span>产业链</span><span>竞争格局</span><span>商业模式</span><span>战略选择</span></div>
+            </div>
             <div class="work-card-body"><div><span>Research Collection</span><h3>《产业分析与公司战略》专著</h3><p>以产业分析框架串联公司战略与案例研究，沉淀系统化研究成果。</p></div><b>阅读全文</b></div>
           </article>
-          <article class="work-card reveal" data-view="assets/docs/ai-compute-infrastructure.pdf" data-kind="pdf" data-title="AI 算力基础设施行业分析" tabindex="0" role="button">
-            <div class="thumb"><img src="assets/thumbs/ai-compute.png" alt="AI 算力基础设施行业分析封面"></div>
-            <div class="work-card-body"><div><span>Industry Research · 13 pages</span><h3>AI 算力基础设施行业分析</h3><p>从产业链、基础设施、竞争格局与商业模式拆解算力行业的发展逻辑。</p></div><b>阅读全文</b></div>
+          <article class="work-card reveal" data-view="assets/docs/ai-compute-robotics-strategy.pdf" data-kind="pdf" data-title="AI 算力基础设施、智能机器人行业分析与公司战略" tabindex="0" role="button">
+            <div class="thumb ai-robot-thumb"><img src="assets/thumbs/ai-compute-robotics.png" alt="AI 算力基础设施、智能机器人行业分析与公司战略封面" loading="lazy"></div>
+            <div class="work-card-body"><div><span>Industry Research · 20 pages</span><h3>AI 算力基础设施与智能机器人</h3><p>围绕算力基础设施与智能机器人两条产业链，分析结构、竞争格局和代表性公司的战略选择。</p></div><b>阅读全文</b></div>
           </article>
           <article class="work-card reveal" data-view="assets/docs/cr-power-strategy.pdf" data-kind="pdf" data-title="华润电力公司投资战略分析" tabindex="0" role="button">
             <div class="thumb"><img src="assets/thumbs/cr-power.png" alt="华润电力公司投资战略分析封面"></div>
