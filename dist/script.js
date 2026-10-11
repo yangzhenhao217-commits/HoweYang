@@ -177,7 +177,7 @@ function fitRscLiveSite() {
   rscLiveWidth = width;
   rscLiveCompact = compact;
   if (compact) {
-    rscLiveStage.style.height = '560px';
+    rscLiveStage.style.height = '480px';
     rscLiveCanvas.style.transform = 'none';
     if (modeChanged) setRscInteraction(false);
   } else {
@@ -223,11 +223,133 @@ const portfolioObserver = new IntersectionObserver((entries) => {
 
 portfolioChapters.forEach((chapter) => portfolioObserver.observe(chapter));
 
+let pdfSession = 0;
+let pdfLoadingTask = null;
+let pdfDocument = null;
+let pdfRenderTask = null;
+
+function resetPdfReader() {
+  pdfSession += 1;
+  pdfRenderTask?.cancel();
+  pdfLoadingTask?.destroy().catch(() => {});
+  pdfRenderTask = null;
+  pdfLoadingTask = null;
+  pdfDocument = null;
+}
+
+function createMobilePdfReader(source, title) {
+  const session = pdfSession;
+  const reader = document.createElement('div');
+  reader.className = 'pdf-reader';
+  reader.innerHTML = `
+    <div class="pdf-reader-toolbar" aria-label="PDF 翻页控制">
+      <button type="button" class="pdf-prev" aria-label="上一页" disabled>上一页</button>
+      <label class="pdf-page-label"><span>第</span><input class="pdf-page-input" type="number" min="1" value="1" inputmode="numeric" aria-label="跳转到页码" disabled><span>页 / <b class="pdf-page-total">…</b></span></label>
+      <button type="button" class="pdf-next" aria-label="下一页" disabled>下一页</button>
+      <button type="button" class="pdf-zoom" aria-label="放大页面" disabled>放大</button>
+    </div>
+    <div class="pdf-reader-stage">
+      <p class="pdf-reader-status" role="status">正在加载文档…</p>
+      <canvas class="pdf-page-canvas" role="img" aria-label="PDF 页面" hidden></canvas>
+    </div>`;
+  const stage = reader.querySelector('.pdf-reader-stage');
+  const status = reader.querySelector('.pdf-reader-status');
+  const canvas = reader.querySelector('canvas');
+  const previous = reader.querySelector('.pdf-prev');
+  const next = reader.querySelector('.pdf-next');
+  const input = reader.querySelector('.pdf-page-input');
+  const total = reader.querySelector('.pdf-page-total');
+  const zoom = reader.querySelector('.pdf-zoom');
+  let currentPage = 1;
+  let zoomed = false;
+  let renderSequence = 0;
+  const stillOpen = () => session === pdfSession && viewer.open;
+
+  const renderPage = async (number) => {
+    if (!pdfDocument || !stillOpen()) return;
+    const sequence = ++renderSequence;
+    currentPage = Math.max(1, Math.min(pdfDocument.numPages, Number(number) || 1));
+    input.value = String(currentPage);
+    previous.disabled = currentPage === 1;
+    next.disabled = currentPage === pdfDocument.numPages;
+    status.hidden = false;
+    status.textContent = `正在打开第 ${currentPage} 页…`;
+    canvas.hidden = true;
+    pdfRenderTask?.cancel();
+    try {
+      const page = await pdfDocument.getPage(currentPage);
+      if (!stillOpen() || sequence !== renderSequence) return;
+      const natural = page.getViewport({ scale: 1 });
+      const availableWidth = Math.max(240, stage.clientWidth - 32);
+      const viewport = page.getViewport({ scale: (availableWidth / natural.width) * (zoomed ? 1.65 : 1) });
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.ceil(viewport.width * pixelRatio);
+      canvas.height = Math.ceil(viewport.height * pixelRatio);
+      canvas.style.width = `${viewport.width}px`;
+      canvas.style.height = `${viewport.height}px`;
+      pdfRenderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: [pixelRatio, 0, 0, pixelRatio, 0, 0] });
+      await pdfRenderTask.promise;
+      if (!stillOpen() || sequence !== renderSequence) return;
+      canvas.setAttribute('aria-label', `${title}，第 ${currentPage} 页，共 ${pdfDocument.numPages} 页`);
+      canvas.hidden = false;
+      status.hidden = true;
+      stage.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch (error) {
+      if (!stillOpen() || sequence !== renderSequence || error?.name === 'RenderingCancelledException') return;
+      status.textContent = '这一页暂时无法显示，请点击右上角「打开原文件」阅读。';
+    }
+  };
+
+  previous.addEventListener('click', () => renderPage(currentPage - 1));
+  next.addEventListener('click', () => renderPage(currentPage + 1));
+  input.addEventListener('change', () => renderPage(input.value));
+  zoom.addEventListener('click', () => {
+    zoomed = !zoomed;
+    zoom.textContent = zoomed ? '适屏' : '放大';
+    zoom.setAttribute('aria-label', zoomed ? '适应屏幕宽度' : '放大页面');
+    renderPage(currentPage);
+  });
+
+  requestAnimationFrame(async () => {
+    try {
+      const pdfjs = await import(new URL('assets/vendor/pdfjs/pdf.min.mjs', document.baseURI).href);
+      if (!stillOpen()) return;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL('assets/vendor/pdfjs/pdf.worker.min.mjs', document.baseURI).href;
+      const task = pdfjs.getDocument({
+        url: source,
+        disableAutoFetch: true,
+        disableStream: true,
+        cMapUrl: new URL('assets/vendor/pdfjs/cmaps/', document.baseURI).href,
+        cMapPacked: true,
+        standardFontDataUrl: new URL('assets/vendor/pdfjs/standard_fonts/', document.baseURI).href,
+      });
+      pdfLoadingTask = task;
+      const loadedPdf = await task.promise;
+      if (!stillOpen()) {
+        task.destroy().catch(() => {});
+        return;
+      }
+      pdfDocument = loadedPdf;
+      total.textContent = String(pdfDocument.numPages);
+      input.max = String(pdfDocument.numPages);
+      input.disabled = false;
+      zoom.disabled = false;
+      await renderPage(1);
+    } catch (error) {
+      console.warn('PDF reader unavailable:', error);
+      if (stillOpen()) status.textContent = '站内阅读暂不可用，请点击右上角「打开原文件」阅读。';
+    }
+  });
+
+  return reader;
+}
+
 function openViewer(trigger) {
   const source = trigger.dataset.view;
   const kind = trigger.dataset.kind || 'pdf';
   const title = trigger.dataset.title || '作品预览';
   if (!source) return;
+  resetPdfReader();
   viewerTitle.textContent = title;
   viewerOpen.href = source;
   viewerContent.replaceChildren();
@@ -275,6 +397,8 @@ function openViewer(trigger) {
     media.src = source;
     media.title = title;
     media.allow = 'clipboard-write';
+  } else if (kind === 'pdf' && window.matchMedia('(max-width: 760px)').matches) {
+    media = createMobilePdfReader(source, title);
   } else {
     media = document.createElement('iframe');
     media.src = `${source}#view=FitH`;
@@ -296,6 +420,7 @@ document.querySelectorAll('[data-view]').forEach((trigger) => {
 });
 
 function closeViewer() {
+  resetPdfReader();
   viewer.close();
   document.body.classList.remove('modal-open');
   viewerContent.replaceChildren();
