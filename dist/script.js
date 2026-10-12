@@ -317,12 +317,14 @@ function createMobilePdfReader(source, title) {
       pdfjs.GlobalWorkerOptions.workerSrc = new URL('assets/vendor/pdfjs/pdf.worker.min.mjs', document.baseURI).href;
       const task = pdfjs.getDocument({
         url: source,
-        disableAutoFetch: true,
-        disableStream: true,
         cMapUrl: new URL('assets/vendor/pdfjs/cmaps/', document.baseURI).href,
         cMapPacked: true,
         standardFontDataUrl: new URL('assets/vendor/pdfjs/standard_fonts/', document.baseURI).href,
       });
+      task.onProgress = ({ loaded, total: bytes }) => {
+        if (!stillOpen() || pdfDocument || !bytes) return;
+        status.textContent = `正在加载文档… ${Math.min(99, Math.round((loaded / bytes) * 100))}%`;
+      };
       pdfLoadingTask = task;
       const loadedPdf = await task.promise;
       if (!stillOpen()) {
