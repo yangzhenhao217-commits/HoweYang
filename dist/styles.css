@@ -87,7 +87,6 @@ img { display: block; width: 100%; }
 .profile-strip { overflow: hidden; padding: 24px 0; color: #fff; background: var(--ink); }
 .marquee-track { width: max-content; display: flex; align-items: center; gap: 28px; padding-left: 28px; animation: marquee 28s linear infinite; font-size: 18px; font-weight: 650; }
 .marquee-track i { width: 5px; height: 5px; border-radius: 50%; background: #6ea8ff; }
-.mobile-skill-dock { display: none; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
 .resume { padding-top: 150px; background: #fff; }
@@ -400,15 +399,9 @@ img { display: block; width: 100%; }
   .hero-card-main h2 { font-size: 32px; }
   .metrics { grid-template-columns: repeat(2, 1fr); gap: 20px 16px; margin-top: 40px; }
   .metric strong { font-size: 32px; }
-  .profile-strip { position: relative; padding: 0; }
+  .profile-strip { position: relative; padding: 16px 0; }
   .profile-strip::after { position: absolute; top: 0; right: 0; bottom: 0; width: 32px; background: linear-gradient(90deg, transparent, var(--ink)); content: ""; pointer-events: none; }
-  .marquee-track { display: none; }
-  .mobile-skill-dock { display: flex; gap: 8px; overflow-x: auto; padding: 12px 24px 12px 16px; scrollbar-width: none; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
-  .mobile-skill-dock::-webkit-scrollbar { display: none; }
-  .mobile-skill-dock a { display: inline-flex; flex: none; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f5f7; background: rgba(255,255,255,.07); font-size: 13px; font-weight: 650; white-space: nowrap; scroll-snap-align: start; transition: background .2s, border-color .2s, transform .2s; }
-  .mobile-skill-dock a::before { width: 5px; height: 5px; border-radius: 50%; background: #81b5ff; content: ""; }
-  .mobile-skill-dock a:active { transform: scale(.96); background: rgba(255,255,255,.17); }
-  .mobile-skill-dock a:focus-visible { outline: 2px solid #81b5ff; outline-offset: 2px; }
+  .marquee-track { display: flex; gap: 20px; padding-left: 20px; font-size: 15px; animation-duration: 24s; }
   .resume { padding-top: 64px; }
   .resume-hero h2 { font-size: clamp(38px, 10.5vw, 50px); }
   .resume-hero > p { font-size: 15px; line-height: 1.65; }
